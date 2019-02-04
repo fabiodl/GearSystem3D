@@ -238,6 +238,11 @@ void InputSettings::LoadSettings(QSettings& settings)
     strcpy(m_Keys[4].text, settings.value("KeyNameA", "S").toString().toLatin1().constData());
     strcpy(m_Keys[5].text, settings.value("KeyNameB", "A").toString().toLatin1().constData());
     strcpy(m_Keys[6].text, settings.value("KeyNameSTART", "RETURN").toString().toLatin1().constData());
+    strcpy(m_Keys[7].text, settings.value("KeyName3Dtoggle", "3").toString().toLatin1().constData());
+    strcpy(m_Keys[8].text, settings.value("KeyName3DoffsetDec", "H").toString().toLatin1().constData());
+    strcpy(m_Keys[9].text, settings.value("KeyName3DoffsetInc", "J").toString().toLatin1().constData());
+    strcpy(m_Keys[10].text, settings.value("KeyName3DscaleDec", "K").toString().toLatin1().constData());
+    strcpy(m_Keys[11].text, settings.value("KeyName3DscaleInc", "L").toString().toLatin1().constData());
 
     widget.lineEditUp->setText(m_Keys[0].text);
     widget.lineEditRight->setText(m_Keys[1].text);
