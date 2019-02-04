@@ -230,11 +230,13 @@ void MainWindow::MenuSettingsWindowSize(QAction* action)
     ResizeWindow(m_iScreenSize);
 }
 
-void MainWindow::MenuSettingsFullscreen()
-{
-    if (m_bFullscreen)
+
+
+
+void MainWindow::ApplyScreenSettings(){
+      if (m_bFullscreen)
     {
-        m_bFullscreen = false;
+       
         this->showNormal();
         m_pUI->menubar->show();
         ResizeWindow(m_iScreenSize);
@@ -242,11 +244,17 @@ void MainWindow::MenuSettingsFullscreen()
     }
     else
     {
-        m_bFullscreen = true;
+
 
         GS_RuntimeInfo runtime_info;
         m_pEmulator->GetRuntimeInfo(runtime_info);
+        Options3D opt3d=m_pGLFrame->Get3DOptions();
+        if (opt3d.enabled){
+          runtime_info.screen_width*=2;
+        }
+        
 
+        
         //m_pGLFrame->setMaximumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
         //m_pGLFrame->setMinimumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
 
@@ -260,11 +268,15 @@ void MainWindow::MenuSettingsFullscreen()
         int w = qApp->desktop()->size().width();
         int h = qApp->desktop()->size().height();
 
-        int factor = h / runtime_info.screen_height;
+
+        
+        int factor = (std::min)(h / runtime_info.screen_height,w / runtime_info.screen_width);
 
         m_pGLFrame->setMaximumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
         m_pGLFrame->setMinimumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
 
+        std::cout<<"screen "<<w<<"x"<<h<<" using "<<(runtime_info.screen_width * factor)<<"x"<<(runtime_info.screen_height * factor)<<std::endl;
+        
         int move_x = (w - (runtime_info.screen_width * factor)) / 2;
         int move_y = (h - (runtime_info.screen_height * factor)) / 2;
         m_pGLFrame->setGeometry(move_x, move_y, runtime_info.screen_width * factor, runtime_info.screen_height * factor);
@@ -272,6 +284,12 @@ void MainWindow::MenuSettingsFullscreen()
 
     setFocus();
     activateWindow();
+}
+
+void MainWindow::MenuSettingsFullscreen()
+{
+  m_bFullscreen = !m_bFullscreen;
+  ApplyScreenSettings();
 }
 
 void MainWindow::MenuSettingsSaveRAMInROMFolder()
@@ -402,9 +420,10 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
     case 7:
       {
         Options3D o=m_pGLFrame->Get3DOptions();
-        o.toggle();
+        o.toggle();        
         std::cout<<"toggle"<<o.enabled<<std::endl;
         m_pGLFrame->Set3DOptions(o);
+        ApplyScreenSettings();
       }
       break;
     case 8:
@@ -483,6 +502,12 @@ void MainWindow::ResizeWindow(int factor)
     GS_RuntimeInfo runtime_info;
     m_pEmulator->GetRuntimeInfo(runtime_info);
 
+    Options3D opt3d=m_pGLFrame->Get3DOptions();
+    if (opt3d.enabled){
+      runtime_info.screen_width*=2;
+    }
+
+    
     m_pGLFrame->setMaximumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
     m_pGLFrame->setMinimumSize(runtime_info.screen_width * factor, runtime_info.screen_height * factor);
 }

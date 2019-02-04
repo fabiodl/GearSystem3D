@@ -82,11 +82,11 @@ protected:
     void keyReleaseEvent(QKeyEvent* e);
     void MenuReleased();
     void ResizeWindow(int factor);
-
+  
 private:
     void LoadSettings();
     void SaveSettings();
-
+    void ApplyScreenSettings();
 private:
     Ui::MainWindow *m_pUI;
     GLFrame *m_pGLFrame;

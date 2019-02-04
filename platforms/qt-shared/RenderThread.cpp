@@ -217,8 +217,8 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
       {           
         double leftX=clip(viewportWidth/2*(1-opt3D.scale-opt3D.offset),0,viewportWidth/2);
         double rightX=clip(viewportWidth/2*(1-opt3D.offset),0,viewportWidth/2);
-        double topY=clip(viewportHeight/2*(1-opt3D.scale/2),0,viewportHeight);
-        double bottomY=clip(viewportHeight/2*(1+opt3D.scale/2),0,viewportHeight);
+        double topY=clip(viewportHeight/2*(1-opt3D.scale),0,viewportHeight);
+        double bottomY=clip(viewportHeight/2*(1+opt3D.scale),0,viewportHeight);
 
         glColor3d(0,0,0);
         glBegin(GL_POLYGON);
@@ -245,8 +245,8 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
       {           
         double leftX=clip(viewportWidth/2*(1+opt3D.offset),viewportWidth/2,viewportWidth);
         double rightX=clip(viewportWidth/2*(1+opt3D.scale+opt3D.offset),viewportWidth/2,viewportWidth);
-        double topY=clip(viewportHeight/2*(1-opt3D.scale/2),0,viewportHeight);
-        double bottomY=clip(viewportHeight/2*(1+opt3D.scale/2),0,viewportHeight);
+        double topY=clip(viewportHeight/2*(1-opt3D.scale),0,viewportHeight);
+        double bottomY=clip(viewportHeight/2*(1+opt3D.scale),0,viewportHeight);
         
         glColor3d(0,0,0);
         glBegin(GL_POLYGON);
