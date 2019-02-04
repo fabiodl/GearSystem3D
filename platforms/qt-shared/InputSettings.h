@@ -51,9 +51,11 @@ private:
     void PrintKey(QKeyEvent& pEvent, char* buffer);
 
 private:
+    static const int KEYSNUM=12;
+  
     Ui::InputSettings widget;
-    stCustomKey m_Keys[7];
-    stCustomKey m_TempKeys[7];
+    stCustomKey m_Keys[KEYSNUM];
+    stCustomKey m_TempKeys[KEYSNUM];
     GLFrame* m_pGLFrame;
 };
 

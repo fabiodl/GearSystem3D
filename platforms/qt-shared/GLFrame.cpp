@@ -84,3 +84,12 @@ void GLFrame::SetBilinearFiletering(bool enabled)
 {
     m_RenderThread.SetBilinearFiletering(enabled);
 }
+
+
+void GLFrame::Set3DOptions(const Options3D& opt){
+  m_RenderThread.Set3DOptions(opt);
+}
+
+Options3D GLFrame::Get3DOptions(){
+  return m_RenderThread.Get3DOptions();
+}

@@ -40,7 +40,7 @@ InputSettings::~InputSettings()
 
 int InputSettings::GetKey(int key)
 {
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < KEYSNUM; i++)
     {
         if (m_Keys[i].keyCode == key)
             return i;
@@ -50,7 +50,7 @@ int InputSettings::GetKey(int key)
 
 void InputSettings::SaveKeys()
 {
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < KEYSNUM; i++)
     {
         m_Keys[i].keyCode = m_TempKeys[i].keyCode;
         strcpy(m_Keys[i].text, m_TempKeys[i].text);
@@ -61,7 +61,7 @@ void InputSettings::SaveKeys()
 
 void InputSettings::RestoreKeys()
 {
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < KEYSNUM; i++)
     {
         m_TempKeys[i].keyCode = m_Keys[i].keyCode;
         strcpy(m_TempKeys[i].text, m_Keys[i].text);
@@ -225,6 +225,11 @@ void InputSettings::LoadSettings(QSettings& settings)
     m_Keys[4].keyCode = settings.value("KeyA", Qt::Key_S).toInt();
     m_Keys[5].keyCode = settings.value("KeyB", Qt::Key_A).toInt();
     m_Keys[6].keyCode = settings.value("KeySTART", Qt::Key_Return).toInt();
+    m_Keys[7].keyCode = settings.value("Key3Dtoggle", Qt::Key_3).toInt();
+    m_Keys[8].keyCode = settings.value("Key3DoffsetDec", Qt::Key_H).toInt();
+    m_Keys[9].keyCode = settings.value("Key3DoffsetInc", Qt::Key_J).toInt();
+    m_Keys[10].keyCode = settings.value("Key3DscaleDec", Qt::Key_K).toInt();
+    m_Keys[11].keyCode = settings.value("Key3DscaleInc", Qt::Key_L).toInt();
 
     strcpy(m_Keys[0].text, settings.value("KeyNameUP", "UP").toString().toLatin1().constData());
     strcpy(m_Keys[1].text, settings.value("KeyNameRIGHT", "RIGHT").toString().toLatin1().constData());
@@ -242,7 +247,7 @@ void InputSettings::LoadSettings(QSettings& settings)
     widget.lineEdit2->setText(m_Keys[5].text);
     widget.lineEditStart->setText(m_Keys[6].text);
 
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < KEYSNUM; i++)
     {
         m_TempKeys[i].keyCode = m_Keys[i].keyCode;
         strcpy(m_TempKeys[i].text, m_Keys[i].text);

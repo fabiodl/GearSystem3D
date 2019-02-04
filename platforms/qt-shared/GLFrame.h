@@ -42,6 +42,8 @@ public:
     void ResumeRenderThread();
     bool IsRunningRenderThread();
     void SetBilinearFiletering(bool enabled);
+    void Set3DOptions(const Options3D& opt);
+    Options3D Get3DOptions();
 
 protected:
     void closeEvent(QCloseEvent *evt);

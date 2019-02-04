@@ -30,7 +30,7 @@ public:
     Emulator();
     ~Emulator();
     void Init();
-    void RunToVBlank(GS_Color* pFrameBuffer);
+  void RunToVBlank(GS_Color* pFrameBuffer,bool* isLeft);
     void LoadRom(const char* szFilePath, bool saveInROMFolder);
     void KeyPressed(GS_Joypads joypad, GS_Keys key);
     void KeyReleased(GS_Joypads joypad, GS_Keys key);

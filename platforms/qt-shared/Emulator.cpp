@@ -58,14 +58,14 @@ void Emulator::LoadRom(const char* szFilePath, bool saveInROMFolder)
     m_Mutex.unlock();
 }
 
-void Emulator::RunToVBlank(GS_Color* pFrameBuffer)
+void Emulator::RunToVBlank(GS_Color* pFrameBuffer,bool* isLeft)
 {
     m_Mutex.lock();
 
     s16 sampleBufer[GS_AUDIO_BUFFER_SIZE];
     int sampleCount = 0;
 
-    m_pGearsystemCore->RunToVBlank(pFrameBuffer, sampleBufer, &sampleCount);
+    m_pGearsystemCore->RunToVBlank(pFrameBuffer, sampleBufer, &sampleCount, isLeft);
 
     if (m_bAudioEnabled && (sampleCount > 0))
     {

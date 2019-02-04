@@ -104,6 +104,11 @@ void SegaMemoryRule::PerformWrite(u16 address, u8 value)
         m_pMemory->Load(address, value);
         m_pMemory->Load(address - 0x2000, value);
 
+
+        if (address>=0xFFF8&&address<=0xFFFB){
+          m_leftImage=value&0x01;
+        }
+        
         switch (address)
         {
             case 0xFFFC:
@@ -245,4 +250,9 @@ void SegaMemoryRule::LoadState(std::istream& stream)
     stream.read(reinterpret_cast<char*> (&m_RAMBankStartAddress), sizeof(m_RAMBankStartAddress));
     stream.read(reinterpret_cast<char*> (&m_bRAMEnabled), sizeof(m_bRAMEnabled));
     stream.read(reinterpret_cast<char*> (&m_iPersistRAM), sizeof(m_iPersistRAM));
+}
+
+
+bool SegaMemoryRule::isLeftImage(){
+  return m_leftImage;
 }

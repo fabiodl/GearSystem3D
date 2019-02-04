@@ -103,7 +103,7 @@ void GearsystemCore::Init()
     InitMemoryRules();
 }
 
-void GearsystemCore::RunToVBlank(GS_Color* pFrameBuffer, s16* pSampleBuffer, int* pSampleCount)
+void GearsystemCore::RunToVBlank(GS_Color* pFrameBuffer, s16* pSampleBuffer, int* pSampleCount,bool* isLeft)
 {
     if (!m_bPaused && m_pCartridge->IsReady())
     {
@@ -116,6 +116,8 @@ void GearsystemCore::RunToVBlank(GS_Color* pFrameBuffer, s16* pSampleBuffer, int
             m_pInput->Tick(clockCycles);
         }
         m_pAudio->EndFrame(pSampleBuffer, pSampleCount);
+        static bool x;
+        *isLeft=m_pSegaMemoryRule->isLeftImage();
     }
 }
 

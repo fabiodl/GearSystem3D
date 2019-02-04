@@ -41,7 +41,7 @@ public:
     GearsystemCore();
     ~GearsystemCore();
     void Init();
-    void RunToVBlank(GS_Color* pFrameBuffer, s16* pSampleBuffer, int* pSampleCount);
+  void RunToVBlank(GS_Color* pFrameBuffer, s16* pSampleBuffer, int* pSampleCount,bool* isLeft);
     bool LoadROM(const char* szFilePath);
     bool LoadROMFromBuffer(const u8* buffer, int size);
     bool GetRuntimeInfo(GS_RuntimeInfo& runtime_info);

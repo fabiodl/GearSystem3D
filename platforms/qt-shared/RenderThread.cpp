@@ -86,9 +86,14 @@ void RenderThread::run()
                 msleep(200);
             }
             else
-            {
-                m_pEmulator->RunToVBlank(m_pFrameBuffer);
-                RenderFrame();
+            {              
+              bool isLeft;
+              m_pEmulator->RunToVBlank(m_pFrameBuffer,&isLeft);
+              if (opt3D.enabled){
+                RenderFrame(isLeft?LEFTSCREEN:RIGHTSCREEN);
+              }else{
+                RenderFrame(SINGLESCREEN);
+              }
             }
 
             m_pGLFrame->swapBuffers();
@@ -139,7 +144,7 @@ void RenderThread::SetupTexture(GLvoid* data)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GS_RESOLUTION_SMS_WIDTH, GS_RESOLUTION_SMS_HEIGHT_EXTENDED, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) data);
 }
 
-void RenderThread::RenderFrame()
+void RenderThread::RenderFrame(TargetScreen screen)
 {
     GS_RuntimeInfo runtime_info;
     m_pEmulator->GetRuntimeInfo(runtime_info);
@@ -171,10 +176,20 @@ void RenderThread::RenderFrame()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
-    RenderQuad(m_iWidth, m_iHeight, false);
+    RenderQuad(m_iWidth, m_iHeight, false,screen);
 }
 
-void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirrorY)
+
+
+inline double clip(double x,double minv,double maxv){
+  if (x>maxv) return maxv;
+  if (x<minv) return minv;
+  return x;
+}
+
+
+
+void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirrorY,TargetScreen screen)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -185,19 +200,120 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
     glMatrixMode(GL_MODELVIEW);
     glViewport(0, 0, viewportWidth, viewportHeight);
 
-    glBegin(GL_QUADS);
-    glTexCoord2d(0.0, 0.0);
-    glVertex2d(0.0, 0.0);
-    glTexCoord2d(1.0, 0.0);
-    glVertex2d(viewportWidth, 0.0);
-    glTexCoord2d(1.0, 1.0);
-    glVertex2d(viewportWidth, viewportHeight);
-    glTexCoord2d(0.0, 1.0);
-    glVertex2d(0.0, viewportHeight);
-    glEnd();
+    switch(screen){
+    case SINGLESCREEN:
+      glBegin(GL_QUADS);
+      glTexCoord2d(0.0, 0.0);
+      glVertex2d(0.0, 0.0);
+      glTexCoord2d(1.0, 0.0);
+      glVertex2d(viewportWidth, 0.0);
+      glTexCoord2d(1.0, 1.0);
+      glVertex2d(viewportWidth, viewportHeight);
+      glTexCoord2d(0.0, 1.0);
+      glVertex2d(0.0, viewportHeight);
+      glEnd();
+      break;
+    case LEFTSCREEN:
+      {           
+        double leftX=clip(viewportWidth/2*(1-opt3D.scale-opt3D.offset),0,viewportWidth/2);
+        double rightX=clip(viewportWidth/2*(1-opt3D.offset),0,viewportWidth/2);
+        double topY=clip(viewportHeight/2*(1-opt3D.scale/2),0,viewportHeight);
+        double bottomY=clip(viewportHeight/2*(1+opt3D.scale/2),0,viewportHeight);
+
+        glColor3d(0,0,0);
+        glBegin(GL_POLYGON);
+        glVertex2d(0, 0);
+        glVertex2d(viewportWidth/2, 0);
+        glVertex2d(viewportWidth/2, viewportHeight);
+        glVertex2d(0, viewportHeight);    
+        glEnd();
+        glColor3d(1,1,1);
+        
+        glBegin(GL_QUADS);
+        glTexCoord2d(0.0, 0.0);
+        glVertex2d(leftX,topY );
+        glTexCoord2d(1.0, 0.0);
+        glVertex2d(rightX,topY);
+        glTexCoord2d(1.0, 1.0);
+        glVertex2d(rightX,bottomY);
+        glTexCoord2d(0.0, 1.0);
+        glVertex2d(leftX,bottomY);
+        glEnd();
+      }
+      break;
+    case RIGHTSCREEN:
+      {           
+        double leftX=clip(viewportWidth/2*(1+opt3D.offset),viewportWidth/2,viewportWidth);
+        double rightX=clip(viewportWidth/2*(1+opt3D.scale+opt3D.offset),viewportWidth/2,viewportWidth);
+        double topY=clip(viewportHeight/2*(1-opt3D.scale/2),0,viewportHeight);
+        double bottomY=clip(viewportHeight/2*(1+opt3D.scale/2),0,viewportHeight);
+        
+        glColor3d(0,0,0);
+        glBegin(GL_POLYGON);
+        glVertex2d(viewportWidth/2, 0);
+        glVertex2d(viewportWidth, 0);
+        glVertex2d(viewportWidth, viewportHeight);
+        glVertex2d(viewportWidth/2, viewportHeight);    
+        glEnd();
+        glColor3d(1,1,1);
+        
+        glBegin(GL_QUADS);
+        glTexCoord2d(0.0, 0.0);
+        glVertex2d(leftX,topY );
+        glTexCoord2d(1.0, 0.0);
+        glVertex2d(rightX,topY);
+        glTexCoord2d(1.0, 1.0);
+        glVertex2d(rightX,bottomY);
+        glTexCoord2d(0.0, 1.0);
+        glVertex2d(leftX,bottomY);
+        glEnd();
+      }
+    };
+
+
+   
 }
 
 void RenderThread::SetBilinearFiletering(bool enabled)
 {
     m_bFiltering = enabled;
+}
+
+
+void RenderThread::Set3DOptions(const Options3D& opt){
+  opt3D=opt;
+}
+
+
+Options3D  RenderThread::Get3DOptions(){
+  return opt3D;
+}
+
+Options3D::Options3D():
+  enabled(false),offset(0),scale(1)
+{
+}
+
+void Options3D::toggle(){
+  enabled=!enabled;
+}
+
+
+void Options3D::incOffset(){
+  offset=clip(offset+0.01,-1,1);
+}
+
+
+void Options3D::decOffset(){
+  offset=clip(offset-0.01,-1,1);
+}
+
+
+void Options3D::incScale(){
+  scale=clip(scale+0.01,-1,1);
+}
+
+
+void Options3D::decScale(){
+  scale=clip(scale-0.01,-1,1);
 }

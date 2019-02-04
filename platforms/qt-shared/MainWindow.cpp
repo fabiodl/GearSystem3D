@@ -396,6 +396,52 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
                 break;
         }
     }
+  //std::cout<<"key"<<e->key()<<std::endl;
+  switch (m_pInputSettings->GetKey(e->key()))
+    {
+    case 7:
+      {
+        Options3D o=m_pGLFrame->Get3DOptions();
+        o.toggle();
+        std::cout<<"toggle"<<o.enabled<<std::endl;
+        m_pGLFrame->Set3DOptions(o);
+      }
+      break;
+    case 8:
+      {
+        Options3D o=m_pGLFrame->Get3DOptions();
+        o.incOffset();
+        m_pGLFrame->Set3DOptions(o);
+      }
+      break;
+    case 9:
+      {
+        Options3D o=m_pGLFrame->Get3DOptions();
+        o.decOffset();
+        m_pGLFrame->Set3DOptions(o);
+        
+      }
+      break;
+    case 10:
+      {
+        Options3D o=m_pGLFrame->Get3DOptions();
+        o.incScale();
+        m_pGLFrame->Set3DOptions(o);
+        
+      }
+      break;
+    case 11:
+      {
+        Options3D o=m_pGLFrame->Get3DOptions();
+        o.decScale();
+        m_pGLFrame->Set3DOptions(o);
+      }
+      break;
+    default:
+      break;
+
+    }
+  
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* e)

@@ -33,6 +33,18 @@ class Emulator;
 class GLFrame;
 class QSize;
 
+class Options3D{
+public:
+  Options3D();
+  bool enabled;
+  double offset,scale;
+  void toggle();
+  void incOffset();
+  void decOffset();
+  void incScale();
+  void decScale();
+};
+
 class RenderThread : public QThread
 {
     Q_OBJECT
@@ -48,11 +60,13 @@ public:
     void SetEmulator(Emulator* pEmulator);
     bool IsRunningEmulator();
     void SetBilinearFiletering(bool enabled);
-
+    void Set3DOptions(const Options3D& opt);
+    Options3D Get3DOptions();
 protected:
+    enum TargetScreen{SINGLESCREEN,LEFTSCREEN,RIGHTSCREEN};
     void Init();
-    void RenderFrame();
-    void RenderQuad(int viewportWidth, int viewportHeight, bool mirrorY);
+    void RenderFrame(TargetScreen screen);
+    void RenderQuad(int viewportWidth, int viewportHeight, bool mirrorY,TargetScreen screen);
     void SetupTexture(GLvoid* data);
 
 private:
@@ -63,6 +77,7 @@ private:
     GS_Color* m_pFrameBuffer;
     bool m_bFiltering;
     GLuint m_GBTexture[3];
+    Options3D opt3D;
 };
 
 #endif // MYRENDERTHREAD_H

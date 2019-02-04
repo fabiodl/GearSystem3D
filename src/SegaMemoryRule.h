@@ -38,7 +38,7 @@ public:
     virtual u8* GetPage(int index);
     virtual void SaveState(std::ostream& stream);
     virtual void LoadState(std::istream& stream);
-
+    bool isLeftImage();
 private:
     int m_iMapperSlot[3];
     int m_iMapperSlotAddress[3];
@@ -46,6 +46,7 @@ private:
     u16 m_RAMBankStartAddress;
     bool m_bRAMEnabled;
     int m_iPersistRAM;
+    bool m_leftImage;
 };
 
 #endif	/* SEGAMEMORYRULE_H */
