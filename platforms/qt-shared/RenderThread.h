@@ -35,6 +35,12 @@ class QSize;
 
 class Options3D{
 public:
+  class ScreenGeometry{
+  public:
+    double left,right,top,bottom,leftLim,rightLim,topLim,bottomLim;    
+  };
+
+
   Options3D();
   bool enabled;
   double offset,scale;
@@ -43,6 +49,7 @@ public:
   void decOffset();
   void incScale();
   void decScale();
+  ScreenGeometry getScreenGeometry(const QSize& s,int width,int height,bool isLeftScreen);
 };
 
 class RenderThread : public QThread

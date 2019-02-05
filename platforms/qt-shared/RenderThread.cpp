@@ -20,6 +20,8 @@
 #include "RenderThread.h"
 #include "GLFrame.h"
 #include "Emulator.h"
+#include <QApplication>
+#include <QDesktopWidget>
 
 RenderThread::RenderThread(GLFrame* pGLFrame) : QThread(), m_pGLFrame(pGLFrame)
 {
@@ -200,75 +202,54 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
     glMatrixMode(GL_MODELVIEW);
     glViewport(0, 0, viewportWidth, viewportHeight);
 
-    switch(screen){
-    case SINGLESCREEN:
-      glBegin(GL_QUADS);
-      glTexCoord2d(0.0, 0.0);
-      glVertex2d(0.0, 0.0);
-      glTexCoord2d(1.0, 0.0);
-      glVertex2d(viewportWidth, 0.0);
-      glTexCoord2d(1.0, 1.0);
-      glVertex2d(viewportWidth, viewportHeight);
-      glTexCoord2d(0.0, 1.0);
-      glVertex2d(0.0, viewportHeight);
-      glEnd();
-      break;
-    case LEFTSCREEN:
-      {           
-        double leftX=clip(viewportWidth/2*(1-opt3D.scale-opt3D.offset),0,viewportWidth/2);
-        double rightX=clip(viewportWidth/2*(1-opt3D.offset),0,viewportWidth/2);
-        double topY=clip(viewportHeight/2*(1-opt3D.scale),0,viewportHeight);
-        double bottomY=clip(viewportHeight/2*(1+opt3D.scale),0,viewportHeight);
-
-        glColor3d(0,0,0);
-        glBegin(GL_POLYGON);
-        glVertex2d(0, 0);
-        glVertex2d(viewportWidth/2, 0);
-        glVertex2d(viewportWidth/2, viewportHeight);
-        glVertex2d(0, viewportHeight);    
-        glEnd();
-        glColor3d(1,1,1);
-        
+    if (screen==SINGLESCREEN)
+      {
         glBegin(GL_QUADS);
         glTexCoord2d(0.0, 0.0);
-        glVertex2d(leftX,topY );
+        glVertex2d(0.0, 0.0);
         glTexCoord2d(1.0, 0.0);
-        glVertex2d(rightX,topY);
+        glVertex2d(viewportWidth, 0.0);
         glTexCoord2d(1.0, 1.0);
-        glVertex2d(rightX,bottomY);
-        glTexCoord2d(0.0, 1.0);
-        glVertex2d(leftX,bottomY);
-        glEnd();
-      }
-      break;
-    case RIGHTSCREEN:
-      {           
-        double leftX=clip(viewportWidth/2*(1+opt3D.offset),viewportWidth/2,viewportWidth);
-        double rightX=clip(viewportWidth/2*(1+opt3D.scale+opt3D.offset),viewportWidth/2,viewportWidth);
-        double topY=clip(viewportHeight/2*(1-opt3D.scale),0,viewportHeight);
-        double bottomY=clip(viewportHeight/2*(1+opt3D.scale),0,viewportHeight);
-        
-        glColor3d(0,0,0);
-        glBegin(GL_POLYGON);
-        glVertex2d(viewportWidth/2, 0);
-        glVertex2d(viewportWidth, 0);
         glVertex2d(viewportWidth, viewportHeight);
-        glVertex2d(viewportWidth/2, viewportHeight);    
+        glTexCoord2d(0.0, 1.0);
+        glVertex2d(0.0, viewportHeight);
+        glEnd();
+      }
+    else
+      {
+        QSize s =m_pGLFrame->parentWidget()->window()->size();
+        m_pGLFrame->setMinimumSize(QSize(0,0));        
+        m_pGLFrame->setMaximumSize(s);        
+        m_pGLFrame->resize(s);
+        GS_RuntimeInfo runtime_info;
+        m_pEmulator->GetRuntimeInfo(runtime_info);        
+        Options3D::ScreenGeometry g=opt3D.getScreenGeometry(s,runtime_info.screen_width,runtime_info.screen_height,screen==LEFTSCREEN);
+
+        
+
+
+
+        
+        glColor3d(0,0,0);
+        glBegin(GL_POLYGON);
+        glVertex2d(g.leftLim, g.topLim);
+        glVertex2d(g.rightLim, g.topLim);
+        glVertex2d(g.rightLim, g.bottomLim);
+        glVertex2d(g.leftLim, g.bottomLim);    
         glEnd();
         glColor3d(1,1,1);
         
         glBegin(GL_QUADS);
         glTexCoord2d(0.0, 0.0);
-        glVertex2d(leftX,topY );
+        glVertex2d(g.left,g.top );
         glTexCoord2d(1.0, 0.0);
-        glVertex2d(rightX,topY);
+        glVertex2d(g.right,g.top);
         glTexCoord2d(1.0, 1.0);
-        glVertex2d(rightX,bottomY);
+        glVertex2d(g.right,g.bottom);
         glTexCoord2d(0.0, 1.0);
-        glVertex2d(leftX,bottomY);
-        glEnd();
+        glVertex2d(g.left,g.bottom);
+        glEnd();      
       }
-    };
 
 
    
@@ -282,6 +263,7 @@ void RenderThread::SetBilinearFiletering(bool enabled)
 
 void RenderThread::Set3DOptions(const Options3D& opt){
   opt3D=opt;
+  std::cout<<"offset="<<opt.offset<<" scale="<<opt.scale<<std::endl;
 }
 
 
@@ -316,4 +298,34 @@ void Options3D::incScale(){
 
 void Options3D::decScale(){
   scale=clip(scale-0.01,-1,1);
+}
+
+
+Options3D::ScreenGeometry Options3D::getScreenGeometry(const QSize& s,int width,int height,bool isLeftScreen){
+  ScreenGeometry g;
+  double factor=std::min(double(s.width())/(2*width),double(s.height())/height);
+  double w=width*factor*scale;
+  double h=height*factor*scale;
+
+  //std::cout<<"width"<<width<<"x"<<height<<std::endl;
+  
+  g.top=s.height()/2-h/2;
+  g.bottom=s.height()/2+h/2;
+
+  g.topLim=0;
+  g.bottomLim=s.height();
+  
+  if (isLeftScreen){
+    g.left=clip(s.width()/2*(1-offset)-w,0,s.width()/2);
+    g.right=clip(s.width()/2*(1-offset),0,s.width()/2);    
+    g.leftLim=0;
+    g.rightLim=s.width()/2;
+  }else{
+    g.left=clip(s.width()/2*(1+offset),s.width()/2,s.width());
+    g.right=clip(s.width()/2*(1+offset)+w,s.width()/2,s.width());
+    g.leftLim=s.width()/2;
+    g.rightLim=s.width();
+  }
+  return g;
+  
 }
