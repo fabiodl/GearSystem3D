@@ -91,11 +91,16 @@ void RenderThread::run()
             {              
               bool isLeft;
               m_pEmulator->RunToVBlank(m_pFrameBuffer,&isLeft);
-              if (opt3D.enabled){
-                RenderFrame(isLeft?LEFTSCREEN:RIGHTSCREEN);
-              }else{
+              switch(opt3D.state){
+              case Options3D::DISABLED:
                 RenderFrame(SINGLESCREEN);
-              }
+                break;
+              case Options3D::ENABLED:
+                RenderFrame(isLeft?LEFTSCREEN:RIGHTSCREEN);
+                break;
+              case Options3D::CALIB:
+                RenderFrame(CALIBSCREEN);
+              }                
             }
 
             m_pGLFrame->swapBuffers();
@@ -146,9 +151,12 @@ void RenderThread::SetupTexture(GLvoid* data)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GS_RESOLUTION_SMS_WIDTH, GS_RESOLUTION_SMS_HEIGHT_EXTENDED, 0, GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) data);
 }
 
+
 void RenderThread::RenderFrame(TargetScreen screen)
 {
-    GS_RuntimeInfo runtime_info;
+
+
+   GS_RuntimeInfo runtime_info;
     m_pEmulator->GetRuntimeInfo(runtime_info);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -166,8 +174,39 @@ void RenderThread::RenderFrame(TargetScreen screen)
 
     }
 
+    if (screen==CALIBSCREEN){
+      memset(m_pFrameBuffer,0,4*runtime_info.screen_width*runtime_info.screen_height);
+      for (int i=0;i<runtime_info.screen_height;i++){
+        m_pFrameBuffer[runtime_info.screen_width*i].blue=255;
+        m_pFrameBuffer[runtime_info.screen_width*i].red=255;
+        m_pFrameBuffer[runtime_info.screen_width*i].green=0;        
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width/2].blue=255;
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width/2].red=255;
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width/2].green=255;
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width-1].blue=0;
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width-1].red=0;
+        m_pFrameBuffer[runtime_info.screen_width*i+runtime_info.screen_width-1].green=255;                
+      }
+      for (int i=0;i<runtime_info.screen_width;i++){
+        m_pFrameBuffer[i].blue=255;
+        m_pFrameBuffer[i].red=255;
+        m_pFrameBuffer[i].green=255;
+        m_pFrameBuffer[runtime_info.screen_width*runtime_info.screen_height/2+i].blue=255;
+        m_pFrameBuffer[runtime_info.screen_width*runtime_info.screen_height/2+i].red=255;
+        m_pFrameBuffer[runtime_info.screen_width*runtime_info.screen_height/2+i].green=255;
+        m_pFrameBuffer[runtime_info.screen_width*(runtime_info.screen_height-1)+i].blue=255;
+        m_pFrameBuffer[runtime_info.screen_width*(runtime_info.screen_height-1)+i].red=255;
+        m_pFrameBuffer[runtime_info.screen_width*(runtime_info.screen_height-1)+i].green=255;                
+        
+      }
+      
+    }
+    
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, runtime_info.screen_width, runtime_info.screen_height,
             GL_RGBA, GL_UNSIGNED_BYTE, (GLvoid*) m_pFrameBuffer);
+
+
+    
     if (m_bFiltering)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -178,6 +217,7 @@ void RenderThread::RenderFrame(TargetScreen screen)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
+  
     RenderQuad(m_iWidth, m_iHeight, false,screen);
 }
 
@@ -223,13 +263,11 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
         m_pGLFrame->resize(s);
         GS_RuntimeInfo runtime_info;
         m_pEmulator->GetRuntimeInfo(runtime_info);        
-        Options3D::ScreenGeometry g=opt3D.getScreenGeometry(s,runtime_info.screen_width,runtime_info.screen_height,screen==LEFTSCREEN);
+        static bool calibLeft=false;
+        Options3D::ScreenGeometry g=opt3D.getScreenGeometry(s,runtime_info.screen_width,runtime_info.screen_height,screen==LEFTSCREEN||(screen==CALIBSCREEN&&calibLeft));
+        calibLeft=!calibLeft;
 
-        
 
-
-
-        
         glColor3d(0,0,0);
         glBegin(GL_POLYGON);
         glVertex2d(g.leftLim, g.topLim);
@@ -237,8 +275,8 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
         glVertex2d(g.rightLim, g.bottomLim);
         glVertex2d(g.leftLim, g.bottomLim);    
         glEnd();
-        glColor3d(1,1,1);
-        
+
+        glColor3d(1,1,1);       
         glBegin(GL_QUADS);
         glTexCoord2d(0.0, 0.0);
         glVertex2d(g.left,g.top );
@@ -249,10 +287,11 @@ void RenderThread::RenderQuad(int viewportWidth, int viewportHeight, bool mirror
         glTexCoord2d(0.0, 1.0);
         glVertex2d(g.left,g.bottom);
         glEnd();      
-      }
+        
 
 
    
+        }
 }
 
 void RenderThread::SetBilinearFiletering(bool enabled)
@@ -272,40 +311,62 @@ Options3D  RenderThread::Get3DOptions(){
 }
 
 Options3D::Options3D():
-  enabled(false),offset(0),scale(1)
+  state(DISABLED),intscaling(false),offset(0),scale(1)
 {
 }
 
 void Options3D::toggle(){
-  enabled=!enabled;
+  state=(State)((state+1)%3);
 }
 
 
 void Options3D::incOffset(){
-  offset=clip(offset+0.01,-1,1);
+  offset=clip(offset+0.001,-1,1);
 }
 
 
 void Options3D::decOffset(){
-  offset=clip(offset-0.01,-1,1);
+  offset=clip(offset-0.001,-1,1);
 }
 
 
 void Options3D::incScale(){
-  scale=clip(scale+0.01,-1,1);
+  if (intscaling)
+    {
+      scale=clip(round(scale)+1,1,scale+1);
+    }  
+  else
+    {
+      scale=clip(scale+0.001,0,1);
+    }
 }
 
 
 void Options3D::decScale(){
-  scale=clip(scale-0.01,-1,1);
+  if (intscaling)
+    {
+      scale=clip(round(scale)-1,1,scale);
+    }  
+  else
+    {
+      scale=clip(scale-0.001,0,1);
+    }
 }
 
 
 Options3D::ScreenGeometry Options3D::getScreenGeometry(const QSize& s,int width,int height,bool isLeftScreen){
   ScreenGeometry g;
   double factor=std::min(double(s.width())/(2*width),double(s.height())/height);
-  double w=width*factor*scale;
-  double h=height*factor*scale;
+
+  double f;
+  if (intscaling){
+    f=clip(round(scale),1,factor);
+  }else{
+    f=scale*factor;
+  }
+    
+  double w=width*f;
+  double h=height*f;
 
   //std::cout<<"width"<<width<<"x"<<height<<std::endl;
   

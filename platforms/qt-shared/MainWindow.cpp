@@ -249,7 +249,7 @@ void MainWindow::ApplyScreenSettings(){
         GS_RuntimeInfo runtime_info;
         m_pEmulator->GetRuntimeInfo(runtime_info);
         Options3D opt3d=m_pGLFrame->Get3DOptions();
-        if (opt3d.enabled){
+        if (opt3d.state!=Options3D::DISABLED){
           runtime_info.screen_width*=2;
         }
         
@@ -420,7 +420,7 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
         {
           Options3D o=m_pGLFrame->Get3DOptions();
           o.toggle();        
-          std::cout<<"toggle"<<o.enabled<<std::endl;
+          std::cout<<"toggle "<<(int)o.state<<std::endl;
           m_pGLFrame->Set3DOptions(o);
           ApplyScreenSettings();
         }
@@ -502,7 +502,7 @@ void MainWindow::ResizeWindow(int factor)
     m_pEmulator->GetRuntimeInfo(runtime_info);
 
     Options3D opt3d=m_pGLFrame->Get3DOptions();
-    if (opt3d.enabled){
+    if (opt3d.state!=Options3D::DISABLED){
       runtime_info.screen_width*=2;
     }
 

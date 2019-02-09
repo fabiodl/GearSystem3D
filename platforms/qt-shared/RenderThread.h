@@ -40,9 +40,10 @@ public:
     double left,right,top,bottom,leftLim,rightLim,topLim,bottomLim;    
   };
 
-
+  enum State {DISABLED,ENABLED,CALIB};
   Options3D();
-  bool enabled;
+  State state;
+  bool intscaling;
   double offset,scale;
   void toggle();
   void incOffset();
@@ -70,7 +71,7 @@ public:
     void Set3DOptions(const Options3D& opt);
     Options3D Get3DOptions();
 protected:
-    enum TargetScreen{SINGLESCREEN,LEFTSCREEN,RIGHTSCREEN};
+  enum TargetScreen{SINGLESCREEN,LEFTSCREEN,RIGHTSCREEN,CALIBSCREEN};
     void Init();
     void RenderFrame(TargetScreen screen);
     void RenderQuad(int viewportWidth, int viewportHeight, bool mirrorY,TargetScreen screen);
